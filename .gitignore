@@ -1,0 +1,43 @@
+# Exclude build artifacts and temporary files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.AppImage
+*.AppDir/
+appimagetool-*.AppImage
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+launch.log
+shutdown.log
+
+# User config (keep template)
+soundboard_config.json
+
+# Temporary icons
+icon-v2.png
+icon_final.png
+icon_final-Photoroom.png

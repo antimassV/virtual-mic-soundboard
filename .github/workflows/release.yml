@@ -1,0 +1,81 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-appimage:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libportaudio2 libsndfile1 ffmpeg pipewire-pulse
+    
+    - name: Make build script executable
+      run: chmod +x build_appimage.sh
+    
+    - name: Build AppImage
+      run: ./build_appimage.sh
+    
+    - name: Get version
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ steps.get_version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+        body: |
+          ## Virtual Mic Soundboard ${{ steps.get_version.outputs.VERSION }}
+          
+          ### Installation
+          
+          **AppImage (Recommended):**
+          ```bash
+          chmod +x VirtualMicSoundboard-*.AppImage
+          ./VirtualMicSoundboard-*.AppImage
+          ```
+          
+          **From Source:**
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | bash
+          ```
+          
+          ### What's New
+          - Initial release
+          - Virtual microphone support via PipeWire
+          - Global hotkey system
+          - Audio routing management
+          - Pause/resume functionality
+          
+          ### Requirements
+          - Linux with PipeWire
+          - Python 3.8+
+    
+    - name: Upload AppImage
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./VirtualMicSoundboard-1.0.0-x86_64.AppImage
+        asset_name: VirtualMicSoundboard-x86_64.AppImage
+        asset_content_type: application/octet-stream
