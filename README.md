@@ -2,7 +2,7 @@
 
 A powerful, feature-rich soundboard application for Linux that routes audio through a virtual microphone using PipeWire.
 
-![Soundboard Icon](icon.png)
+![Soundboard Icon](assets/icon.png)
 
 ## Features
 
