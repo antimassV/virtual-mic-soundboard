@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Mic Soundboard - Linux Soundboard for PipeWire</title>
+    <meta name="description" content="A powerful soundboard application for Linux that routes audio through a virtual microphone using PipeWire. Perfect for Discord, OBS, and games.">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-hover: #79b8ff;
+            --green: #3fb950;
+            --border: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            padding: 48px 0 32px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .badges {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .badge.green {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #2ea043;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        main {
+            padding: 48px 0;
+        }
+
+        section {
+            margin-bottom: 48px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .feature-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .install-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .install-option {
+            margin-bottom: 24px;
+        }
+
+        .install-option:last-child {
+            margin-bottom: 0;
+        }
+
+        .install-option h3 {
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .code-block {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9rem;
+        }
+
+        .code-block code {
+            color: var(--text-primary);
+        }
+
+        .requirements-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            list-style: none;
+        }
+
+        .requirements-list li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .privacy-notice {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--green);
+            padding: 16px 20px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .privacy-notice h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: var(--green);
+        }
+
+        .privacy-notice p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        footer {
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .tagline {
+                font-size: 1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">🎵</div>
+            <h1>Virtual Mic Soundboard</h1>
+            <p class="tagline">Play sounds through a virtual microphone on Linux with PipeWire</p>
+            
+            <div class="badges">
+                <span class="badge green">✓ Open Source</span>
+                <span class="badge">Linux</span>
+                <span class="badge">PipeWire</span>
+                <span class="badge">MIT License</span>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="https://github.com/antimassV/virtual-mic-soundboard/releases/latest" class="btn btn-primary">
+                    ⬇️ Download AppImage
+                </a>
+                <a href="https://github.com/antimassV/virtual-mic-soundboard" class="btn btn-secondary">
+                    📂 View on GitHub
+                </a>
+            </div>
+        </header>
+
+        <main>
+            <section>
+                <h2>Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>🎤 Virtual Microphone</h3>
+                        <p>Plays sounds through a virtual mic that works with Discord, OBS, games, and any app that uses microphone input.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>⌨️ Global Hotkeys</h3>
+                        <p>Trigger sounds with customizable keyboard shortcuts, even when the app is in the background or while gaming.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎚️ Volume Control</h3>
+                        <p>Individual volume sliders for each sound plus a master volume. Supports up to 200% boost.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>⏯️ Pause & Resume</h3>
+                        <p>Pause sounds mid-playback and resume exactly where you left off.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔄 Audio Overlap</h3>
+                        <p>Choose whether sounds play simultaneously or interrupt each other.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔌 Easy Routing</h3>
+                        <p>Built-in routing tab to wire applications directly to the virtual microphone.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Installation</h2>
+                <div class="install-section">
+                    <div class="install-option">
+                        <h3>Quick Install (Recommended)</h3>
+                        <div class="code-block">
+                            <code>curl -fsSL https://raw.githubusercontent.com/antimassV/virtual-mic-soundboard/main/install.sh | bash</code>
+                        </div>
+                    </div>
+                    
+                    <div class="install-option">
+                        <h3>AppImage (Portable)</h3>
+                        <div class="code-block">
+                            <code>curl -L -o VirtualMicSoundboard.AppImage https://github.com/antimassV/virtual-mic-soundboard/releases/latest/download/VirtualMicSoundboard-x86_64.AppImage<br>chmod +x VirtualMicSoundboard.AppImage<br>./VirtualMicSoundboard.AppImage</code>
+                        </div>
+                    </div>
+
+                    <div class="install-option">
+                        <h3>From Source</h3>
+                        <div class="code-block">
+                            <code>git clone https://github.com/antimassV/virtual-mic-soundboard.git<br>cd virtual-mic-soundboard<br>./install.sh</code>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>System Requirements</h2>
+                <ul class="requirements-list">
+                    <li>🐧 Linux (Ubuntu 20.04+, Fedora 34+, Arch)</li>
+                    <li>🔊 PipeWire with PulseAudio compat</li>
+                    <li>🐍 Python 3.8+</li>
+                    <li>🖥️ X11 or Wayland</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Privacy</h2>
+                <div class="privacy-notice">
+                    <h3>🔒 Your keystrokes are private</h3>
+                    <p>This app uses <code>pynput</code> for global hotkey detection. <strong>Keystrokes are NOT recorded or sent anywhere.</strong> They are only used locally on your machine to trigger sound playback when you press your configured hotkey combinations.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="footer-links">
+                <a href="https://github.com/antimassV/virtual-mic-soundboard">GitHub</a>
+                <a href="https://github.com/antimassV/virtual-mic-soundboard/releases">Releases</a>
+                <a href="https://github.com/antimassV/virtual-mic-soundboard/issues">Issues</a>
+                <a href="https://github.com/antimassV/virtual-mic-soundboard/blob/main/LICENSE">MIT License</a>
+            </div>
+            <p>Created by <a href="https://github.com/antimassV">antimassV</a> • Made with ❤️ for the Linux community</p>
+        </footer>
+    </div>
+</body>
+</html>
