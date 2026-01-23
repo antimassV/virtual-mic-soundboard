@@ -34,8 +34,11 @@ Thumbs.db
 launch.log
 shutdown.log
 
-# User config (keep template)
+# User config (keep locally, use template for repo if needed)
 soundboard_config.json
+
+# Generated Desktop Entry (local paths)
+soundboard.desktop
 
 # Temporary icons
 icon-v2.png

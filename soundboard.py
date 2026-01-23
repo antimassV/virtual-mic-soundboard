@@ -47,15 +47,69 @@ def check_dependencies():
     if missing:
         print(f"Installing missing packages: {', '.join(missing)}")
         try:
-            subprocess.check_call([
-                sys.executable, '-m', 'pip', 'install', *missing
-            ])
-            print("Dependencies installed successfully.")
+            subprocess.check_call([sys.executable, "-m", "pip", "install"] + missing)
+            print("Dependencies installed successfully. Restarting...")
+            os.execv(sys.executable, [sys.executable] + sys.argv)
         except Exception as e:
             print(f"Failed to install dependencies: {e}")
-            print("Please install them manually: pip install " + " ".join(missing))
+            sys.exit(1)
 
 check_dependencies()
+
+def _integrate_appimage(app):
+    """Automatically create a desktop entry when running as AppImage."""
+    appimage_path = os.environ.get('APPIMAGE')
+    if not appimage_path:
+        return
+
+    desktop_dir = os.path.expanduser("~/.local/share/applications")
+    desktop_file = os.path.join(desktop_dir, "virtual-mic-soundboard-appimage.desktop")
+    
+    # If it already exists and points to this AppImage, we're good
+    if os.path.exists(desktop_file):
+        with open(desktop_file, 'r') as f:
+            content = f.read()
+            if appimage_path in content:
+                return
+
+    print("AppImage Integration: Creating desktop entry...")
+    os.makedirs(desktop_dir, exist_ok=True)
+    
+    # Copy icon to a standard location
+    icon_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
+    icon_dest_dir = os.path.expanduser("~/.local/share/icons/hicolor/256x256/apps")
+    os.makedirs(icon_dest_dir, exist_ok=True)
+    icon_dest = os.path.join(icon_dest_dir, "virtual-mic-soundboard.png")
+    
+    if os.path.exists(icon_src):
+        import shutil
+        shutil.copy2(icon_src, icon_dest)
+        
+    entry = f"""[Desktop Entry]
+Type=Application
+Name=Virtual Mic Soundboard (AppImage)
+Comment=Play sounds through a virtual microphone
+Exec="{appimage_path}"
+Icon=virtual-mic-soundboard
+Categories=Audio;AudioVideo;
+Terminal=false
+StartupNotify=false
+StartupWMClass=soundboard
+X-AppImage-Version=1.0.0
+"""
+    with open(desktop_file, 'w') as f:
+        f.write(entry)
+        
+    # Make executable
+    os.chmod(desktop_file, 0o755)
+    
+    # Update cache
+    try:
+        subprocess.run(["update-desktop-database", desktop_dir], check=False)
+    except:
+        pass
+    
+    print("AppImage integrated successfully!")
 
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -2081,10 +2135,16 @@ def main():
     app.setDesktopFileName("soundboard")
     app.setQuitOnLastWindowClosed(True)
     
-    # Set global application icon
     icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
+
+    # AppImage Desktop Integration
+    if os.environ.get('APPIMAGE'):
+        try:
+            _integrate_appimage(app)
+        except Exception as e:
+            print(f"Failed to integrate AppImage: {e}")
     
     window = SoundboardWindow()
     # Match StartupWMClass for dock grouping
