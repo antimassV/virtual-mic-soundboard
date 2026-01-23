@@ -12,4 +12,4 @@ fi
 source venv/bin/activate
 
 # Use a direct log redirect instead of tee to prevent orphaned processes
-exec python3 soundboard.py "$@" > launch.log 2>&1
+exec python3 src/soundboard.py "$@" > launch.log 2>&1

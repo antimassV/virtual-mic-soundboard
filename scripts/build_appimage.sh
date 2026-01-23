@@ -20,10 +20,12 @@ mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 
 # Copy application files
 echo "Copying application files..."
-cp soundboard.py "$APPDIR/usr/bin/"
+cp src/soundboard.py "$APPDIR/usr/bin/"
 cp requirements.txt "$APPDIR/usr/bin/"
-cp icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/soundboard.png"
-cp icon.png "$APPDIR/"
+# Icon for system integration (nested deep)
+cp assets/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/soundboard.png"
+# Icon in root for AppImage to show itself
+cp assets/icon.png "$APPDIR/icon.png"
 
 # Create AppRun script
 cat > "$APPDIR/AppRun" << 'EOF'

@@ -76,7 +76,11 @@ def _integrate_appimage(app):
     os.makedirs(desktop_dir, exist_ok=True)
     
     # Copy icon to a standard location
-    icon_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    icon_src = os.path.join(script_dir, "..", "assets", "icon.png") # Try parent/assets first
+    if not os.path.exists(icon_src):
+        icon_src = os.path.join(script_dir, "icon.png") # Fallback to current directory (flat AppImage structure)
+
     icon_dest_dir = os.path.expanduser("~/.local/share/icons/hicolor/256x256/apps")
     os.makedirs(icon_dest_dir, exist_ok=True)
     icon_dest = os.path.join(icon_dest_dir, "virtual-mic-soundboard.png")
@@ -2135,9 +2139,19 @@ def main():
     app.setDesktopFileName("soundboard")
     app.setQuitOnLastWindowClosed(True)
     
-    icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
-    if os.path.exists(icon_path):
-        app.setWindowIcon(QIcon(icon_path))
+    # Set global application icon
+    # Handle both source run (src/../assets) and installed run
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    possible_icons = [
+        os.path.join(base_dir, "..", "assets", "icon.png"), # From src/
+        os.path.join(base_dir, "assets", "icon.png"),       # From root/
+        os.path.join(base_dir, "icon.png")                  # Flat/AppImage
+    ]
+    
+    for icon_path in possible_icons:
+        if os.path.exists(icon_path):
+            app.setWindowIcon(QIcon(icon_path))
+            break
 
     # AppImage Desktop Integration
     if os.environ.get('APPIMAGE'):

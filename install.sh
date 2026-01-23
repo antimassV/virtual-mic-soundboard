@@ -96,9 +96,16 @@ echo "Creating installation directory..."
 mkdir -p "$INSTALL_DIR"
 
 # If running from git repo, copy files
-if [ -f "soundboard.py" ]; then
+if [ -d "src" ]; then
     echo "Installing from local directory..."
-    cp -r . "$INSTALL_DIR/"
+    cp -r src "$INSTALL_DIR/"
+    cp -r assets "$INSTALL_DIR/"
+    cp -r scripts "$INSTALL_DIR/"
+    # Copy root files
+    cp requirements.txt "$INSTALL_DIR/"
+    cp run_soundboard.sh "$INSTALL_DIR/"
+    # Copy Uninstall script specifically
+    cp scripts/uninstall.sh "$INSTALL_DIR/"
 else
     # Download from GitHub
     echo "Downloading from GitHub..."
@@ -125,7 +132,7 @@ pip install -r requirements.txt
 
 # Make scripts executable
 chmod +x run_soundboard.sh
-chmod +x install.sh
+chmod +x scripts/*.sh 2>/dev/null || true
 chmod +x uninstall.sh
 
 # Create desktop entry
@@ -136,7 +143,7 @@ Type=Application
 Name=Virtual Mic Soundboard
 Comment=Play sounds through a virtual microphone
 Exec="$INSTALL_DIR/run_soundboard.sh"
-Icon=$INSTALL_DIR/icon.png
+Icon=$INSTALL_DIR/assets/icon.png
 Path=$INSTALL_DIR
 Terminal=false
 Categories=Audio;AudioVideo;
