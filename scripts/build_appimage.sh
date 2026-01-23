@@ -5,7 +5,7 @@
 set -e
 
 APP_NAME="VirtualMicSoundboard"
-VERSION="1.0.0"
+VERSION="1.0.0-untested"
 ARCH="x86_64"
 
 echo "Building AppImage for $APP_NAME v$VERSION..."
@@ -24,8 +24,9 @@ cp src/soundboard.py "$APPDIR/usr/bin/"
 cp requirements.txt "$APPDIR/usr/bin/"
 # Icon for system integration (nested deep)
 cp assets/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/soundboard.png"
-# Icon in root for AppImage to show itself
-cp assets/icon.png "$APPDIR/icon.png"
+# Icon in root for AppImage to show itself (must match Icon= name in desktop file)
+cp assets/icon.png "$APPDIR/soundboard.png"
+cp assets/icon.png "$APPDIR/.DirIcon"
 
 # Create AppRun script
 cat > "$APPDIR/AppRun" << 'EOF'
