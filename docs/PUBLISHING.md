@@ -44,7 +44,7 @@ This script will:
 
 2. **Push your code:**
    ```bash
-   git remote add origin https://github.com/dsadasdasdasdg/virtual-mic-soundboard.git
+   git remote add origin https://github.com/antimassV/virtual-mic-soundboard.git
    git push -u origin main
    ```
 
@@ -89,13 +89,13 @@ Once published, anyone (including you on other devices) can install with:
 
 ### Quick Install:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dsadasdasdasdg/virtual-mic-soundboard/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/antimassV/virtual-mic-soundboard/main/install.sh | bash
 ```
 
 ### AppImage (Portable):
 ```bash
 # Download from releases
-wget https://github.com/dsadasdasdasdg/virtual-mic-soundboard/releases/latest/download/VirtualMicSoundboard-x86_64.AppImage
+wget https://github.com/antimassV/virtual-mic-soundboard/releases/latest/download/VirtualMicSoundboard-x86_64.AppImage
 
 # Make executable and run
 chmod +x VirtualMicSoundboard-x86_64.AppImage
@@ -105,7 +105,7 @@ chmod +x VirtualMicSoundboard-x86_64.AppImage
 ## Updating the README
 
 Before publishing, update these placeholders in `README.md`:
-- Replace `dsadasdasdasdg` with your GitHub username
+- Replace `antimassV` with your GitHub username
 - Update the repository URL
 - Add screenshots if desired
 

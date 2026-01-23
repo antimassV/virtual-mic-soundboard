@@ -65,7 +65,7 @@ It will guide you through the entire process!
 
 If you already created a repo manually, you can skip the script and just:
 ```bash
-git remote add origin https://github.com/dsadasdasdasdg/virtual-mic-soundboard.git
+git remote add origin https://github.com/antimassV/virtual-mic-soundboard.git
 git push -u origin main
 ```
 

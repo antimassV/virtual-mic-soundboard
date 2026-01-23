@@ -32,14 +32,14 @@ A powerful, feature-rich soundboard application for Linux that routes audio thro
 
 ```bash
 # Download and run the installer
-curl -fsSL https://raw.githubusercontent.com/dsadasdasdasdg/virtual-mic-soundboard/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/antimassV/virtual-mic-soundboard/main/install.sh | bash
 ```
 
 ### Manual Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/dsadasdasdasdg/virtual-mic-soundboard.git
+git clone https://github.com/antimassV/virtual-mic-soundboard.git
 cd virtual-mic-soundboard
 ```
 
@@ -56,11 +56,11 @@ chmod +x install.sh
 
 ### AppImage (Portable)
 
-Download the latest AppImage from [Releases](https://github.com/dsadasdasdasdg/virtual-mic-soundboard/releases):
+Download the latest AppImage from [Releases](https://github.com/antimassV/virtual-mic-soundboard/releases):
 
 ```bash
 # Download the AppImage
-wget https://github.com/dsadasdasdasdg/virtual-mic-soundboard/releases/latest/download/VirtualMicSoundboard-x86_64.AppImage
+wget https://github.com/antimassV/virtual-mic-soundboard/releases/latest/download/VirtualMicSoundboard-x86_64.AppImage
 
 # Make it executable
 chmod +x VirtualMicSoundboard-x86_64.AppImage

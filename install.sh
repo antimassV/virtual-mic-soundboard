@@ -4,7 +4,7 @@
 
 set -e
 
-REPO_URL="https://github.com/dsadasdasdasdg/virtual-mic-soundboard"
+REPO_URL="https://github.com/antimassV/virtual-mic-soundboard"
 INSTALL_DIR="$HOME/.local/share/virtual-mic-soundboard"
 DESKTOP_FILE="$HOME/.local/share/applications/soundboard.desktop"
 
