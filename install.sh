@@ -4,13 +4,18 @@
 
 set -e
 
-REPO_URL="https://github.com/YOUR_USERNAME/virtual-mic-soundboard"
+REPO_URL="https://github.com/dsadasdasdasdg/virtual-mic-soundboard"
 INSTALL_DIR="$HOME/.local/share/virtual-mic-soundboard"
 DESKTOP_FILE="$HOME/.local/share/applications/soundboard.desktop"
 
 echo "========================================="
 echo "Virtual Mic Soundboard Installer"
 echo "========================================="
+echo ""
+echo "Privacy Notice:"
+echo "This app uses pynput to detect global hotkeys."
+echo "Keystrokes are NOT recorded or sent anywhere."
+echo "They are only used locally to trigger sounds."
 echo ""
 
 # Detect package manager

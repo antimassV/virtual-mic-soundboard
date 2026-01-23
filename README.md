@@ -22,6 +22,10 @@ A powerful, feature-rich soundboard application for Linux that routes audio thro
 - **Python**: 3.8 or higher
 - **Desktop**: X11 or Wayland
 
+## Privacy
+
+**Hotkey Detection:** This app uses `pynput` to detect global hotkeys for triggering sounds. **Keystrokes are NOT recorded or sent anywhere.** They are only used locally on your machine to trigger sound playback when you press the configured hotkey combinations.
+
 ## Installation
 
 ### Quick Install (Recommended)
