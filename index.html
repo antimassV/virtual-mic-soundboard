@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Mic Soundboard - Linux Soundboard for PipeWire</title>
-    <meta name="description" content="A powerful soundboard application for Linux that routes audio through a virtual microphone using PipeWire. Perfect for Discord, OBS, and games.">
+    <meta name="description"
+        content="A powerful soundboard application for Linux that routes audio through a virtual microphone using PipeWire. Perfect for Discord, OBS, and games.">
     <style>
         :root {
             --bg-primary: #0d1117;
@@ -279,13 +281,23 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
             <div class="logo">🎵</div>
             <h1>Virtual Mic Soundboard</h1>
             <p class="tagline">Play sounds through a virtual microphone on Linux with PipeWire</p>
-            
+
+            <div style="margin-bottom: 20px;">
+                <a href="https://github.com/antimassV" style="text-decoration: none;">
+                    <span class="badge"
+                        style="background: var(--bg-tertiary); border-color: var(--accent); color: var(--accent); font-size: 0.95rem; padding: 6px 16px;">
+                        👤 by antimassV
+                    </span>
+                </a>
+            </div>
+
             <div class="badges">
                 <span class="badge green">✓ Open Source</span>
                 <span class="badge">Linux</span>
@@ -309,11 +321,13 @@
                 <div class="features-grid">
                     <div class="feature-card">
                         <h3>🎤 Virtual Microphone</h3>
-                        <p>Plays sounds through a virtual mic that works with Discord, OBS, games, and any app that uses microphone input.</p>
+                        <p>Plays sounds through a virtual mic that works with Discord, OBS, games, and any app that uses
+                            microphone input.</p>
                     </div>
                     <div class="feature-card">
                         <h3>⌨️ Global Hotkeys</h3>
-                        <p>Trigger sounds with customizable keyboard shortcuts, even when the app is in the background or while gaming.</p>
+                        <p>Trigger sounds with customizable keyboard shortcuts, even when the app is in the background
+                            or while gaming.</p>
                     </div>
                     <div class="feature-card">
                         <h3>🎚️ Volume Control</h3>
@@ -343,7 +357,7 @@
                             <code>curl -fsSL https://raw.githubusercontent.com/antimassV/virtual-mic-soundboard/main/install.sh | bash</code>
                         </div>
                     </div>
-                    
+
                     <div class="install-option">
                         <h3>AppImage (Portable)</h3>
                         <div class="code-block">
@@ -374,7 +388,9 @@
                 <h2>Privacy</h2>
                 <div class="privacy-notice">
                     <h3>🔒 Your keystrokes are private</h3>
-                    <p>This app uses <code>pynput</code> for global hotkey detection. <strong>Keystrokes are NOT recorded or sent anywhere.</strong> They are only used locally on your machine to trigger sound playback when you press your configured hotkey combinations.</p>
+                    <p>This app uses <code>pynput</code> for global hotkey detection. <strong>Keystrokes are NOT
+                            recorded or sent anywhere.</strong> They are only used locally on your machine to trigger
+                        sound playback when you press your configured hotkey combinations.</p>
                 </div>
             </section>
         </main>
@@ -386,8 +402,13 @@
                 <a href="https://github.com/antimassV/virtual-mic-soundboard/issues">Issues</a>
                 <a href="https://github.com/antimassV/virtual-mic-soundboard/blob/main/LICENSE">MIT License</a>
             </div>
-            <p>Created by <a href="https://github.com/antimassV">antimassV</a> • Made with ❤️ for the Linux community</p>
+            <p style="font-size: 1.1rem; margin-bottom: 8px;">
+                Created by <a href="https://github.com/antimassV"
+                    style="font-weight: 600; color: var(--accent);">antimassV</a>
+            </p>
+            <p style="font-size: 0.9rem;">Made with ❤️ for the Linux community</p>
         </footer>
     </div>
 </body>
+
 </html>
