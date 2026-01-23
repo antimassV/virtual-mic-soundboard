@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
     
     - name: Install system dependencies
       run: |
@@ -27,7 +27,9 @@ jobs:
       run: chmod +x scripts/build_appimage.sh
     
     - name: Build AppImage
-      run: ./scripts/build_appimage.sh
+      run: |
+        cd scripts
+        ./build_appimage.sh
     
     - name: Get version
       id: get_version
@@ -35,53 +37,47 @@ jobs:
     
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: Release ${{ steps.get_version.outputs.VERSION }}
+        name: Virtual Mic Soundboard ${{ steps.get_version.outputs.VERSION }}
         draft: false
         prerelease: false
         body: |
           ## Virtual Mic Soundboard ${{ steps.get_version.outputs.VERSION }}
           
-          ### Installation
+          A powerful soundboard application for Linux with PipeWire support.
+          
+          ### 📦 Installation
           
           **AppImage (Recommended):**
           ```bash
-          chmod +x VirtualMicSoundboard-*.AppImage
-          ./VirtualMicSoundboard-*.AppImage
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/VirtualMicSoundboard-x86_64.AppImage
+          chmod +x VirtualMicSoundboard-x86_64.AppImage
+          ./VirtualMicSoundboard-x86_64.AppImage
           ```
           
-          **From Source:**
+          **Quick Install:**
           ```bash
           curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | bash
           ```
           
-          ### What's New
-          - Initial release
-          - Virtual microphone support via PipeWire
-          - Global hotkey system
-          - Audio routing management
-          - Pause/resume functionality
+          ### ✨ Features
+          - 🎤 Virtual microphone via PipeWire
+          - ⌨️ Global hotkey system
+          - 🔌 Easy audio routing
+          - ⏯️ Pause/resume sounds
+          - 💾 Persistent configuration
           
-          ### Requirements
-          - Linux with PipeWire
+          ### 📋 Requirements
+          - Linux (Ubuntu 20.04+, Fedora 34+, Arch)
+          - PipeWire with PulseAudio compatibility
           - Python 3.8+
-    
-    - name: Find AppImage
-      id: find_appimage
-      run: |
-        APPIMAGE=$(ls VirtualMicSoundboard-*.AppImage | head -n 1)
-        echo "appimage=$APPIMAGE" >> $GITHUB_OUTPUT
-    
-    - name: Upload AppImage
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./${{ steps.find_appimage.outputs.appimage }}
-        asset_name: VirtualMicSoundboard-x86_64.AppImage
-        asset_content_type: application/octet-stream
+          
+          ---
+          Created by [antimassV](https://github.com/antimassV)
+        files: |
+          VirtualMicSoundboard-*.AppImage
+
