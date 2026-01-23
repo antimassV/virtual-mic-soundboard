@@ -5,13 +5,18 @@
 set -e
 
 APP_NAME="VirtualMicSoundboard"
-VERSION="1.0.0-untested"
+VERSION="1.0.1"
 ARCH="x86_64"
+
+# Get the project root directory (one level up from this script)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$ROOT_DIR"
 
 echo "Building AppImage for $APP_NAME v$VERSION..."
 
 # Create AppDir structure
-APPDIR="$APP_NAME.AppDir"
+APPDIR="$ROOT_DIR/$APP_NAME.AppDir"
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr/bin"
 mkdir -p "$APPDIR/usr/lib"
@@ -22,10 +27,15 @@ mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 echo "Copying application files..."
 cp src/soundboard.py "$APPDIR/usr/bin/"
 cp requirements.txt "$APPDIR/usr/bin/"
-# Icon for system integration (nested deep)
+cp assets/icon.png "$APPDIR/usr/bin/icon.png"
+cp -r assets "$APPDIR/usr/"
+
+# Icon for system integration
+mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 cp assets/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/soundboard.png"
-# Icon in root for AppImage to show itself (must match Icon= name in desktop file)
-cp assets/icon.png "$APPDIR/soundboard.png"
+
+# Root icons for AppImage (must match Icon= name in desktop file)
+cp assets/icon.png "$APPDIR/icon.png"
 cp assets/icon.png "$APPDIR/.DirIcon"
 
 # Create AppRun script
@@ -60,7 +70,7 @@ Type=Application
 Name=Virtual Mic Soundboard
 Comment=Play sounds through a virtual microphone
 Exec=soundboard
-Icon=soundboard
+Icon=icon
 Categories=Audio;AudioVideo;
 Terminal=false
 EOF

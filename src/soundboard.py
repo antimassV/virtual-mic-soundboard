@@ -99,7 +99,7 @@ Categories=Audio;AudioVideo;
 Terminal=false
 StartupNotify=false
 StartupWMClass=soundboard
-X-AppImage-Version=1.0.0
+X-AppImage-Version=1.0.1
 """
     with open(desktop_file, 'w') as f:
         f.write(entry)

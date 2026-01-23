@@ -54,8 +54,8 @@ This script will:
 
 ```bash
 # Tag the release
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
 GitHub Actions will automatically:
@@ -70,17 +70,17 @@ GitHub Actions will automatically:
 ./build_appimage.sh
 
 # Create release on GitHub
-gh release create v1.0.0 VirtualMicSoundboard-*.AppImage \
-  --title "Virtual Mic Soundboard v1.0.0" \
-  --notes "Initial release with virtual microphone support"
+gh release create v1.0.1 VirtualMicSoundboard-*.AppImage \
+  --title "Virtual Mic Soundboard v1.0.1" \
+  --notes "Release v1.0.1"
 ```
 
 ### Option 3: Manual Upload
 
 1. Build locally: `./build_appimage.sh`
 2. Go to your repo → Releases → "Create a new release"
-3. Tag: `v1.0.0`
-4. Upload `VirtualMicSoundboard-1.0.0-x86_64.AppImage`
+3. Tag: `v1.0.1`
+4. Upload `VirtualMicSoundboard-1.0.1-x86_64.AppImage`
 5. Publish release
 
 ## Using on Other Devices
