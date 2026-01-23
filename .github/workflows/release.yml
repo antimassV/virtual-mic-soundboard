@@ -24,10 +24,10 @@ jobs:
         sudo apt-get install -y libportaudio2 libsndfile1 ffmpeg pipewire-pulse
     
     - name: Make build script executable
-      run: chmod +x build_appimage.sh
+      run: chmod +x scripts/build_appimage.sh
     
     - name: Build AppImage
-      run: ./build_appimage.sh
+      run: ./scripts/build_appimage.sh
     
     - name: Get version
       id: get_version
@@ -70,12 +70,18 @@ jobs:
           - Linux with PipeWire
           - Python 3.8+
     
+    - name: Find AppImage
+      id: find_appimage
+      run: |
+        APPIMAGE=$(ls VirtualMicSoundboard-*.AppImage | head -n 1)
+        echo "appimage=$APPIMAGE" >> $GITHUB_OUTPUT
+    
     - name: Upload AppImage
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./VirtualMicSoundboard-1.0.0-x86_64.AppImage
+        asset_path: ./${{ steps.find_appimage.outputs.appimage }}
         asset_name: VirtualMicSoundboard-x86_64.AppImage
         asset_content_type: application/octet-stream
