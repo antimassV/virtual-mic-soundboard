@@ -96,6 +96,8 @@ case $PKG_MANAGER in
         ;;
 esac
 
+# ... (keep existing dependency checks) ...
+
 # Create installation directory
 echo "Creating installation directory..."
 mkdir -p "$INSTALL_DIR"
@@ -140,15 +142,24 @@ chmod +x run_soundboard.sh
 chmod +x scripts/*.sh 2>/dev/null || true
 chmod +x uninstall.sh
 
+# Install Icon
+echo "Installing icon..."
+ICON_DIR="$HOME/.local/share/icons/hicolor/256x256/apps"
+mkdir -p "$ICON_DIR"
+cp "$INSTALL_DIR/assets/icon.png" "$ICON_DIR/virtual-mic-soundboard.png"
+
 # Create desktop entry
 echo "Creating desktop shortcut..."
+DESKTOP_ENTRY_NAME="virtual-mic-soundboard.desktop"
+DESKTOP_FILE="$HOME/.local/share/applications/$DESKTOP_ENTRY_NAME"
+
 cat > "$DESKTOP_FILE" << EOF
 [Desktop Entry]
 Type=Application
 Name=Virtual Mic Soundboard
 Comment=Play sounds through a virtual microphone
 Exec="$INSTALL_DIR/run_soundboard.sh"
-Icon=$INSTALL_DIR/assets/icon.png
+Icon=virtual-mic-soundboard
 Path=$INSTALL_DIR
 Terminal=false
 Categories=Audio;AudioVideo;
@@ -159,13 +170,16 @@ EOF
 
 chmod +x "$DESKTOP_FILE"
 
+# Clean up old desktop files if they exist
+rm -f "$HOME/.local/share/applications/soundboard.desktop"
+
 # Update desktop database
 if command -v update-desktop-database &> /dev/null; then
-    update-desktop-database "$HOME/.local/share/applications"
+    update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 fi
 
 if command -v gtk-update-icon-cache &> /dev/null; then
-    gtk-update-icon-cache -f -t ~/.local/share/icons 2>/dev/null || true
+    gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
 fi
 
 echo ""

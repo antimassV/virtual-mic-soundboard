@@ -67,6 +67,8 @@ chmod +x VirtualMicSoundboard-x86_64.AppImage
 
 # Run it
 ./VirtualMicSoundboard-x86_64.AppImage
+
+> **Note:** On launch, the AppImage will automatically integrate itself into your system menu and update its icon. You'll see a small indicator window confirming the environment is active.
 ```
 
 ## Usage
@@ -151,7 +153,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Run
-python3 soundboard.py
+python3 src/soundboard.py
 ```
 
 ## License

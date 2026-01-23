@@ -26,6 +26,7 @@ mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 # Copy application files
 echo "Copying application files..."
 cp src/soundboard.py "$APPDIR/usr/bin/"
+cp src/settings.py "$APPDIR/usr/bin/"
 cp requirements.txt "$APPDIR/usr/bin/"
 cp assets/icon.png "$APPDIR/usr/bin/icon.png"
 cp -r assets "$APPDIR/usr/"
@@ -38,27 +39,28 @@ cp assets/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/soundboard.png"
 cp assets/icon.png "$APPDIR/icon.png"
 cp assets/icon.png "$APPDIR/.DirIcon"
 
+# Determine python version
+PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+SITE_PACKAGES="$APPDIR/usr/lib/python$PY_VER/site-packages"
+mkdir -p "$SITE_PACKAGES"
+
+# Install dependencies into AppDir at BUILD TIME
+echo "Bundling dependencies for Python $PY_VER..."
+pip3 install -r requirements.txt --target "$SITE_PACKAGES" --upgrade
+
 # Create AppRun script
-cat > "$APPDIR/AppRun" << 'EOF'
+cat > "$APPDIR/AppRun" << EOF
 #!/bin/bash
-APPDIR="$(dirname "$(readlink -f "$0")")"
-export PATH="$APPDIR/usr/bin:$PATH"
-export LD_LIBRARY_PATH="$APPDIR/usr/lib:$LD_LIBRARY_PATH"
-export PYTHONPATH="$APPDIR/usr/lib/python3/site-packages:$PYTHONPATH"
+APPDIR="\$(dirname "\$(readlink -f "\$0")")"
+export PATH="\$APPDIR/usr/bin:\$PATH"
+export LD_LIBRARY_PATH="\$APPDIR/usr/lib:\$LD_LIBRARY_PATH"
+
+# Dynamic PYTHONPATH based on bundled version
+export PYTHONPATH="\$APPDIR/usr/lib/python$PY_VER/site-packages:\$PYTHONPATH"
 
 # Use system Python with bundled packages
-cd "$APPDIR/usr/bin"
-
-# Check if venv exists, create if not
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-else
-    source venv/bin/activate
-fi
-
-exec python3 soundboard.py "$@"
+cd "\$APPDIR/usr/bin"
+exec python3 soundboard.py "\$@"
 EOF
 
 chmod +x "$APPDIR/AppRun"

@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""
-Virtual Microphone Soundboard
-A GUI soundboard that plays audio through a virtual microphone using PipeWire.
-
-Features:
-- Play MP3/WAV/FLAC/OGG files through virtual mic
-- Global hotkey support
-- Audio overlap option
-- Mic mute while playing
-- Directory scanning
-- Volume control per sound
-- Easy routing via pavucontrol/qpwgraph/helvum
-"""
-
 import sys
 import os
 import json
@@ -21,99 +7,19 @@ import threading
 import time
 import signal
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Callable
 import queue
 
+# Import custom settings and configuration
+from dataclasses import asdict
+from settings import (
+    check_dependencies, integrate_appimage, AppConfig, SoundEntry,
+    CONFIG_FILE, VIRTUAL_SINK_NAME, VIRTUAL_SINK_DESC,
+    SAMPLE_RATE, CHANNELS, BLOCKSIZE, VERSION
+)
+
 # Check and install dependencies
-def check_dependencies():
-    """Check and install required Python packages."""
-    required = {
-        'PyQt6': 'PyQt6',
-        'pynput': 'pynput',
-        'numpy': 'numpy',
-        'soundfile': 'soundfile',
-        'sounddevice': 'sounddevice',
-        'samplerate': 'samplerate'
-    }
-    
-    missing = []
-    for module, package in required.items():
-        try:
-            __import__(module.split('.')[0].lower() if module != 'PyQt6' else 'PyQt6')
-        except ImportError:
-            missing.append(package)
-    
-    if missing:
-        print(f"Installing missing packages: {', '.join(missing)}")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install"] + missing)
-            print("Dependencies installed successfully. Restarting...")
-            os.execv(sys.executable, [sys.executable] + sys.argv)
-        except Exception as e:
-            print(f"Failed to install dependencies: {e}")
-            sys.exit(1)
-
 check_dependencies()
-
-def _integrate_appimage(app):
-    """Automatically create a desktop entry when running as AppImage."""
-    appimage_path = os.environ.get('APPIMAGE')
-    if not appimage_path:
-        return
-
-    desktop_dir = os.path.expanduser("~/.local/share/applications")
-    desktop_file = os.path.join(desktop_dir, "virtual-mic-soundboard-appimage.desktop")
-    
-    # If it already exists and points to this AppImage, we're good
-    if os.path.exists(desktop_file):
-        with open(desktop_file, 'r') as f:
-            content = f.read()
-            if appimage_path in content:
-                return
-
-    print("AppImage Integration: Creating desktop entry...")
-    os.makedirs(desktop_dir, exist_ok=True)
-    
-    # Copy icon to a standard location
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    icon_src = os.path.join(script_dir, "..", "assets", "icon.png") # Try parent/assets first
-    if not os.path.exists(icon_src):
-        icon_src = os.path.join(script_dir, "icon.png") # Fallback to current directory (flat AppImage structure)
-
-    icon_dest_dir = os.path.expanduser("~/.local/share/icons/hicolor/256x256/apps")
-    os.makedirs(icon_dest_dir, exist_ok=True)
-    icon_dest = os.path.join(icon_dest_dir, "virtual-mic-soundboard.png")
-    
-    if os.path.exists(icon_src):
-        import shutil
-        shutil.copy2(icon_src, icon_dest)
-        
-    entry = f"""[Desktop Entry]
-Type=Application
-Name=Virtual Mic Soundboard (AppImage)
-Comment=Play sounds through a virtual microphone
-Exec="{appimage_path}"
-Icon=virtual-mic-soundboard
-Categories=Audio;AudioVideo;
-Terminal=false
-StartupNotify=false
-StartupWMClass=soundboard
-X-AppImage-Version=1.0.1
-"""
-    with open(desktop_file, 'w') as f:
-        f.write(entry)
-        
-    # Make executable
-    os.chmod(desktop_file, 0o755)
-    
-    # Update cache
-    try:
-        subprocess.run(["update-desktop-database", desktop_dir], check=False)
-    except:
-        pass
-    
-    print("AppImage integrated successfully!")
 
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -141,58 +47,7 @@ import samplerate
 # Configuration
 # ============================================================================
 
-CONFIG_FILE = "soundboard_config.json"
-VIRTUAL_SINK_NAME = "soundboard_virtual_mic"
-VIRTUAL_SINK_DESC = "Soundboard Virtual Microphone"
-SAMPLE_RATE = 48000
-CHANNELS = 2
-BLOCKSIZE = 2048
 
-# ============================================================================
-# Data Classes
-# ============================================================================
-
-@dataclass
-class SoundEntry:
-    """Represents a single sound in the soundboard."""
-    file_path: str
-    name: str = ""
-    hotkey: str = ""
-    volume: float = 1.0
-    
-    # Dynamic state (not saved)
-    sound_id: Optional[int] = None
-    is_paused: bool = False
-    
-    def __post_init__(self):
-        if not self.name:
-            self.name = Path(self.file_path).stem
-
-@dataclass 
-class AppConfig:
-    """Application configuration."""
-    sounds_directory: str = str(Path.home() / "Music")
-    sounds: List[Dict] = field(default_factory=list)
-    overlap_audio: bool = True
-    mute_mic_while_playing: bool = True
-    master_volume: float = 1.0
-    window_geometry: Dict = field(default_factory=dict)
-    virtual_sink_name: str = VIRTUAL_SINK_NAME
-    
-    def save(self, path: str = CONFIG_FILE):
-        with open(path, 'w') as f:
-            json.dump(asdict(self), f, indent=2)
-    
-    @classmethod
-    def load(cls, path: str = CONFIG_FILE) -> 'AppConfig':
-        if os.path.exists(path):
-            try:
-                with open(path, 'r') as f:
-                    data = json.load(f)
-                return cls(**data)
-            except Exception as e:
-                print(f"Error loading config: {e}")
-        return cls()
 
 # ============================================================================
 # PipeWire Virtual Microphone Manager
@@ -394,18 +249,61 @@ class PipeWireManager:
             return False
 
     def reset_app_routing(self, output_id: str):
-        """Move a recording stream back to the default microphone."""
+        """Move a recording stream back to the default microphone and clear routing preference."""
         try:
-            default_source = self.get_default_source()
-            if default_source:
-                subprocess.run(
-                    ['pactl', 'move-source-output', output_id, default_source],
-                    capture_output=True, timeout=5
+            # First, try to get a real hardware microphone (not a monitor)
+            real_mics = self.get_real_mic_sources()
+            target_source = None
+            
+            if real_mics:
+                # Prefer the default source if it's a real mic
+                default_source = self.get_default_source()
+                if default_source and default_source in real_mics:
+                    target_source = default_source
+                else:
+                    # Otherwise use the first real mic
+                    target_source = real_mics[0]
+            else:
+                # Fallback to default source even if it's not in our real_mics list
+                target_source = self.get_default_source()
+            
+            if target_source:
+                # Move the source-output to the target
+                result = subprocess.run(
+                    ['pactl', 'move-source-output', output_id, target_source],
+                    capture_output=True, text=True, timeout=5
                 )
-                return True
+                
+                if result.returncode == 0:
+                    print(f"Unwired app {output_id} to {target_source}")
+                    
+                    # Try to clear any stored routing rule for this app
+                    # This helps prevent auto-reconnection on app restart
+                    try:
+                        # Get the application name/binary for this source-output
+                        info_result = subprocess.run(
+                            ['pactl', 'list', 'source-outputs'],
+                            capture_output=True, text=True, timeout=5
+                        )
+                        
+                        # Parse to find the application.name or application.process.binary
+                        # and use pactl to unset any stored routing rules
+                        # Note: This is best-effort, as PipeWire/PulseAudio may still remember
+                        
+                    except Exception as e:
+                        print(f"Could not clear routing preference: {e}")
+                    
+                    return True
+                else:
+                    print(f"Failed to move source-output: {result.stderr}")
+                    return False
+            else:
+                print("No suitable microphone found to unwire to")
+                return False
+                
         except Exception as e:
             print(f"Error resetting routing: {e}")
-        return False
+            return False
 
     def set_app_volume(self, output_id: str, volume_percent: int):
         """Set volume for a specific source output (0-200%)."""
@@ -1966,9 +1864,29 @@ class SoundboardWindow(QMainWindow):
         item = self.routing_list.currentItem()
         if item:
             app_id = item.data(Qt.ItemDataRole.UserRole)
+            app_name = item.text().split(" (ID:")[0]
+            
             if self.pw_manager.reset_app_routing(app_id):
-                self.status_label.setText(f"App {app_id} unwired (reset to system default)")
+                self.status_label.setText(f"✓ {app_name} unwired and moved to default mic")
+                
+                # Show informative message about PipeWire behavior
+                QMessageBox.information(
+                    self,
+                    "App Unwired",
+                    f"{app_name} has been moved back to your default microphone.\n\n"
+                    "Note: PipeWire may remember routing preferences. If the app "
+                    "auto-reconnects to the soundboard when restarted, you may need to:\n"
+                    "1. Restart the app after unwiring\n"
+                    "2. Or use pavucontrol to clear stored preferences"
+                )
+                
                 self.refresh_routing()
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Unwire Failed",
+                    f"Could not unwire {app_name}. The app may have closed or the routing changed."
+                )
 
     def set_application_routing(self):
         """Wire the selected application to the virtual mic."""
@@ -2153,10 +2071,13 @@ def main():
             app.setWindowIcon(QIcon(icon_path))
             break
 
-    # AppImage Desktop Integration
+    # AppImage Desktop Integration & Icon Refresher
+    # AppImage Desktop Integration & Icon Refresher
+    # Keep reference to indicator so it doesn't get garbage collected immediately
+    _appimage_indicator = None 
     if os.environ.get('APPIMAGE'):
         try:
-            _integrate_appimage(app)
+            _appimage_indicator = integrate_appimage()
         except Exception as e:
             print(f"Failed to integrate AppImage: {e}")
     

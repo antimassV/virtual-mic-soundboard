@@ -40,6 +40,7 @@ The `setup_github.sh` script is a **helper tool** that makes it easy to publish 
 - ✅ `README.md` - Main documentation
 - ✅ `LICENSE` - MIT License
 - ✅ `soundboard.py` - Main application
+- ✅ `settings.py` - Configuration and integration
 - ✅ `requirements.txt` - Dependencies
 - ✅ `icon.png` - Logo
 - ✅ `.gitignore` - Ignore rules
