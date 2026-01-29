@@ -34,7 +34,7 @@ VIRTUAL_SINK_DESC = "Soundboard Virtual Microphone"
 SAMPLE_RATE = 48000
 CHANNELS = 2
 BLOCKSIZE = 2048
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 # ... (Data Classes omitted, same as before) ...
 
