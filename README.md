@@ -167,3 +167,8 @@ Created with ❤️ by the Antigravity team
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+
+## Known issues
+
+There’s a issue involving the audio played into the soundboard virtual device causing no audio to be actually sent to the device, it may be because of how the code in soundboard.py doesnt wait for the virtual device to be fully registered causing it to be broken, planning to be fixed in v1.0.3 (appimage 1.0.2) which the libraries ”libportaudio.so.2” and ”libsndfile.so.1” will hopefully be added in the new appimage.
