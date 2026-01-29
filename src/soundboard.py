@@ -61,6 +61,17 @@ class PipeWireManager:
         self.module_id = None
         self.null_sink_id = None
         
+    def wait_for_device_initialization(self, timeout_sec=5.0) -> bool:
+        """Polls until the virtual sink actually appears in the device list."""
+        start_time = time.time()
+        while time.time() - start_time < timeout_sec:
+            # Refresh device list
+            sinks = self.get_available_sinks()
+            if self.sink_name in sinks:
+                return True
+            time.sleep(0.2)
+        return False
+        
     def check_pipewire(self) -> bool:
         """Check if PipeWire is running."""
         try:
@@ -526,15 +537,35 @@ class AudioPlayer:
             return
         
         try:
+            # Force a refresh of sounddevice's internal device list
+            try:
+                sd._terminate()
+                sd._initialize()
+            except ImportError:
+                # older versions might not support this private API
+                pass
+            except Exception as e:
+                print(f"Warning refreshing sounddevice: {e}")
+            
             # Find the virtual sink device
             devices = sd.query_devices()
             device_id = None
             
             for i, dev in enumerate(devices):
+                # Look for our specific sink name
                 if self.sink_name in dev['name'] and dev['max_output_channels'] >= 2:
                     device_id = i
                     break
             
+            if device_id is None:
+                print(f"Warning: Could not find virtual sink '{self.sink_name}' in PortAudio devices.")
+                # Fallback (Existing behavior) - but we log it now
+                print("Falling back to default device (Audio might not go to Mic!)")
+                try:
+                    device_id = sd.default.device['output']
+                except:
+                    pass
+
             self.stream = sd.OutputStream(
                 device=device_id,
                 samplerate=SAMPLE_RATE,
@@ -544,23 +575,10 @@ class AudioPlayer:
                 callback=self._audio_callback
             )
             self.stream.start()
-            print(f"Audio stream started on device: {device_id}")
+            print(f"Audio stream started on device ID: {device_id}")
             
         except Exception as e:
-            print(f"Error starting audio stream: {e}")
-            # Try default device
-            try:
-                self.stream = sd.OutputStream(
-                    samplerate=SAMPLE_RATE,
-                    channels=CHANNELS,
-                    dtype=np.float32,
-                    blocksize=BLOCKSIZE,
-                    callback=self._audio_callback
-                )
-                self.stream.start()
-                print("Audio stream started on default device")
-            except Exception as e2:
-                print(f"Error starting on default device: {e2}")
+            print(f"Critical Error starting audio stream: {e}")
     
     def stop_stream(self):
         """Stop the audio output stream."""
@@ -1395,7 +1413,7 @@ class SoundboardWindow(QMainWindow):
         """)
     
     def setup_audio(self):
-        """Initialize audio system."""
+        """Initialize audio system with robust race-condition handling."""
         # Check PipeWire
         if not self.pw_manager.check_pulseaudio_compat():
             QMessageBox.warning(
@@ -1405,25 +1423,41 @@ class SoundboardWindow(QMainWindow):
             )
             return
         
-        # Create virtual bridge (sink + loopback to speaker)
+        # 1. Create virtual bridge
         if not self.pw_manager.create_virtual_bridge():
-            QMessageBox.warning(
-                self, "Virtual Microphone",
-                "Failed to create virtual microphone bridge.\n"
-                "You may not hear the audio yourself, but it might still work as a mic."
-            )
+            self.status_label.setText("Error creating virtual sink")
+            return
         
-        # Wait a moment for sink to be ready
-        time.sleep(0.5)
+        # 2. INTELLIGENT WAIT: Poll until PipeWire reports the device is ready
+        self.status_label.setText("Waiting for virtual device...")
+        QApplication.processEvents() # Keep UI responsive
         
-        # Start audio stream
+        if self.pw_manager.wait_for_device_initialization():
+            print("Virtual device confirmed ready.")
+        else:
+            print("Timeout waiting for virtual device - attempting to proceed anyway.")
+
+        # 3. Start audio stream (Now that device definitely exists)
         self.audio_player.start_stream()
         self.audio_player.set_master_volume(self.config.master_volume)
         
-        # Ensure our own audio is going to the virtual sink
-        # We start playing silence immediately so the stream exists to be moved
-        # We wait 500ms for PipeWire to register the stream
-        QTimer.singleShot(500, lambda: self.pw_manager.move_own_stream_to_virtual_sink())
+        # 4. ROBUST STREAM MOVING
+        # We try to move the stream immediately, but also retry a few times
+        # just in case the stream isn't "visible" to pactl yet.
+        def retry_move_stream(attempts=0):
+            if attempts > 5:
+                print("Could not move stream to virtual sink after 5 attempts.")
+                return
+                
+            found = self.pw_manager.move_own_stream_to_virtual_sink()
+            if not found:
+                # If we didn't find our stream, wait and try again
+                QTimer.singleShot(500, lambda: retry_move_stream(attempts + 1))
+            else:
+                self.status_label.setText("Ready")
+
+        # Start the move attempt loop
+        retry_move_stream()
     
     def load_sounds(self):
         """Load sounds from configuration."""

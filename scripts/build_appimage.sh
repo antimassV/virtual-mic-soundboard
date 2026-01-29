@@ -1,11 +1,12 @@
 #!/bin/bash
 # AppImage builder for Virtual Mic Soundboard
 # This script packages the soundboard as a portable AppImage
+# Updated to bundle libportaudio and libsndfile
 
 set -e
 
 APP_NAME="VirtualMicSoundboard"
-VERSION="1.0.1"
+VERSION="1.0.2"
 ARCH="x86_64"
 
 # Get the project root directory (one level up from this script)
@@ -44,11 +45,51 @@ PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_i
 SITE_PACKAGES="$APPDIR/usr/lib/python$PY_VER/site-packages"
 mkdir -p "$SITE_PACKAGES"
 
-# Install dependencies into AppDir at BUILD TIME
-echo "Bundling dependencies for Python $PY_VER..."
+# -------------------------------------------------------------------------
+# BUNDLE SYSTEM LIBRARIES (Fix for missing .so files)
+# -------------------------------------------------------------------------
+echo "Bundling system shared libraries..."
+
+# Helper function to find and copy a library by name
+# Uses 'ldconfig' to find the path, 'cp -L' to dereference symlinks (copy the actual file)
+copy_lib() {
+    local lib_name_pattern=$1
+    # Find the library path. Grep filters, head takes the first match, cut extracts path.
+    local lib_path=$(ldconfig -p | grep "$lib_name_pattern" | head -n 1 | cut -d ">" -f 2 | xargs)
+    
+    if [ -n "$lib_path" ] && [ -f "$lib_path" ]; then
+        echo "  -> Bundling $lib_name_pattern from $lib_path"
+        cp -L "$lib_path" "$APPDIR/usr/lib/"
+    else
+        echo "  !! WARNING: Could not find system library matching: $lib_name_pattern"
+        echo "     (The AppImage might fail to run on systems without this library)"
+    fi
+}
+
+# 1. Core Audio Libraries
+copy_lib "libportaudio.so.2"
+copy_lib "libsndfile.so.1"
+
+# 2. Dependencies for libsndfile (Vorbis, OGG, FLAC support)
+copy_lib "libvorbis.so"
+copy_lib "libvorbisenc.so"
+copy_lib "libogg.so"
+copy_lib "libflac.so"
+copy_lib "libopus.so"
+copy_lib "libmpg123.so"  # For MP3 support if available
+
+# 3. System helpers often needed by Python CFFI (used by soundfile/pynput)
+copy_lib "libffi.so"
+
+# -------------------------------------------------------------------------
+
+# Install Python dependencies into AppDir at BUILD TIME
+echo "Bundling Python dependencies for Python $PY_VER..."
+# We use --upgrade to ensure we get fresh wheels (which often contain their own binary libs)
 pip3 install -r requirements.txt --target "$SITE_PACKAGES" --upgrade
 
 # Create AppRun script
+# Note: LD_LIBRARY_PATH ensures our bundled libs in usr/lib are found first
 cat > "$APPDIR/AppRun" << EOF
 #!/bin/bash
 APPDIR="\$(dirname "\$(readlink -f "\$0")")"
@@ -88,6 +129,7 @@ fi
 
 # Build AppImage
 echo "Building AppImage..."
+# ARCH=x86_64 explicitly set to avoid errors on some systems
 ARCH=$ARCH ./appimagetool-x86_64.AppImage "$APPDIR" "$APP_NAME-$VERSION-$ARCH.AppImage"
 
 echo "AppImage created: $APP_NAME-$VERSION-$ARCH.AppImage"
