@@ -96,8 +96,6 @@ case $PKG_MANAGER in
         ;;
 esac
 
-# ... (keep existing dependency checks) ...
-
 # Create installation directory
 echo "Creating installation directory..."
 mkdir -p "$INSTALL_DIR"

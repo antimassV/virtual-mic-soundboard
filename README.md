@@ -67,16 +67,16 @@ chmod +x VirtualMicSoundboard-x86_64.AppImage
 
 # Run it
 ./VirtualMicSoundboard-x86_64.AppImage
-
-> **Note:** On launch, the AppImage will automatically integrate itself into your system menu and update its icon. You'll see a small indicator window confirming the environment is active.
 ```
+
+> **Note:** The AppImage bundles its own Python runtime and dependencies, so it does not depend on the system Python version. On launch it will automatically integrate itself into your system menu and update its icon; you'll see a small indicator window confirming the environment is active.
 
 ## Usage
 
 ### Adding Sounds
 
 1. Click "Add Sound" in the main window
-2. Select an audio file (MP3, WAV, FLAC, or OGG)
+2. Select an audio file (MP3, WAV, FLAC, OGG, or OPUS)
 3. Optionally set a hotkey by clicking "Set Hotkey" and pressing your desired key combination
 4. Adjust the volume slider for individual sound volume
 
@@ -121,14 +121,19 @@ The virtual microphone is created automatically when you launch the app. To use 
 ## Uninstallation
 
 ```bash
-cd /path/to/soundboard
-./uninstall.sh
+# From a cloned repository
+./scripts/uninstall.sh
+
+# Or from an installed copy
+~/.local/share/virtual-mic-soundboard/uninstall.sh
 ```
 
 Or manually:
 ```bash
-rm -rf ~/.local/share/applications/soundboard.desktop
-rm -rf /path/to/soundboard
+rm -f ~/.local/share/applications/virtual-mic-soundboard.desktop
+rm -f ~/.local/share/icons/hicolor/256x256/apps/virtual-mic-soundboard.png
+rm -rf ~/.local/share/virtual-mic-soundboard
+rm -rf ~/.config/virtual-mic-soundboard
 ```
 
 ## Development
@@ -159,10 +164,6 @@ python3 src/soundboard.py
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details
-
-## Credits
-
-Created with ❤️ by the Antigravity team
 
 ## Contributing
 

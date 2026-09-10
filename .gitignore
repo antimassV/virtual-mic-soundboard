@@ -9,8 +9,10 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+# AppImage build output
 *.AppImage
 *.AppDir/
+squashfs-root/
 appimagetool-*.AppImage
 
 # Virtual environment
@@ -33,6 +35,10 @@ Thumbs.db
 *.log
 launch.log
 shutdown.log
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
 
 # User config (keep locally, use template for repo if needed)
 soundboard_config.json

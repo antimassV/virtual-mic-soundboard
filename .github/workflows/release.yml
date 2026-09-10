@@ -12,20 +12,15 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libportaudio2 libsndfile1 ffmpeg pipewire-pulse
-    
+        sudo apt-get install -y libportaudio2 libsndfile1
+
     - name: Make build script executable
       run: chmod +x scripts/build_appimage.sh
-    
+
     - name: Build AppImage
       run: |
         cd scripts

@@ -9,15 +9,22 @@
         content="A powerful soundboard application for Linux that routes audio through a virtual microphone using PipeWire. Perfect for Discord, OBS, and games.">
     <style>
         :root {
-            --bg-primary: #0d1117;
-            --bg-secondary: #161b22;
-            --bg-tertiary: #21262d;
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
+            --bg-primary: #0b0f14;
+            --bg-secondary: #121820;
+            --bg-tertiary: #1b232e;
+            --bg-elevated: #161e28;
+            --text-primary: #d6deeb;
+            --text-secondary: #8b98a9;
             --accent: #58a6ff;
-            --accent-hover: #79b8ff;
+            --accent-hover: #7cb8ff;
             --green: #3fb950;
-            --border: #30363d;
+            --green-hover: #34a445;
+            --border: #263140;
+            --border-strong: #334155;
+            --radius: 10px;
+            --radius-sm: 8px;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            --transition: 160ms ease;
         }
 
         * {
@@ -26,11 +33,29 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-            background-color: var(--bg-primary);
+            background:
+                radial-gradient(1200px 600px at 50% -200px, rgba(88, 166, 255, 0.10), transparent 70%),
+                var(--bg-primary);
             color: var(--text-primary);
-            line-height: 1.6;
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            color: var(--accent);
+        }
+
+        a:focus-visible,
+        .btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: 4px;
         }
 
         .container {
@@ -40,26 +65,23 @@
         }
 
         header {
-            padding: 48px 0 32px;
+            padding: 72px 0 48px;
             text-align: center;
             border-bottom: 1px solid var(--border);
         }
 
-        .logo {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
         h1 {
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin-bottom: 12px;
+            font-size: clamp(2rem, 5vw, 2.75rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 14px;
         }
 
         .tagline {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: var(--text-secondary);
-            margin-bottom: 24px;
+            max-width: 620px;
+            margin: 0 auto 28px;
         }
 
         .badges {
@@ -67,28 +89,31 @@
             gap: 8px;
             justify-content: center;
             flex-wrap: wrap;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .badge {
             display: inline-flex;
             align-items: center;
-            padding: 4px 12px;
+            padding: 5px 13px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 0.85rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
             color: var(--text-secondary);
+            letter-spacing: 0.01em;
+            transition: border-color var(--transition), color var(--transition);
         }
 
         .badge.green {
-            border-color: var(--green);
+            border-color: rgba(63, 185, 80, 0.5);
             color: var(--green);
+            background: rgba(63, 185, 80, 0.08);
         }
 
         .cta-buttons {
             display: flex;
-            gap: 16px;
+            gap: 14px;
             justify-content: center;
             flex-wrap: wrap;
         }
@@ -96,139 +121,190 @@
         .btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-            padding: 12px 24px;
-            border-radius: 6px;
+            padding: 13px 26px;
+            border-radius: var(--radius-sm);
             font-size: 1rem;
-            font-weight: 500;
+            font-weight: 600;
             text-decoration: none;
-            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background var(--transition), border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
         }
 
         .btn-primary {
             background: var(--green);
-            color: #fff;
+            color: #04130a;
+            box-shadow: 0 6px 18px rgba(63, 185, 80, 0.25);
         }
 
         .btn-primary:hover {
-            background: #2ea043;
+            background: var(--green-hover);
         }
 
         .btn-secondary {
             background: var(--bg-tertiary);
             color: var(--text-primary);
-            border: 1px solid var(--border);
+            border-color: var(--border-strong);
         }
 
         .btn-secondary:hover {
-            background: var(--border);
+            background: var(--bg-elevated);
+            border-color: var(--accent);
         }
 
         main {
-            padding: 48px 0;
+            padding: 56px 0;
         }
 
         section {
-            margin-bottom: 48px;
+            margin-bottom: 56px;
         }
 
         h2 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 600;
-            margin-bottom: 20px;
-            padding-bottom: 8px;
+            letter-spacing: -0.01em;
+            margin-bottom: 22px;
+            padding-bottom: 10px;
             border-bottom: 1px solid var(--border);
         }
 
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            gap: 18px;
         }
 
         .feature-card {
-            background: var(--bg-secondary);
+            position: relative;
+            background: linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
+            border-radius: var(--radius);
+            padding: 22px;
+            transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+        }
+
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 2px;
+            border-radius: var(--radius) var(--radius) 0 0;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
         }
 
         .feature-card h3 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.1rem;
+            font-size: 1.08rem;
+            font-weight: 600;
             margin-bottom: 8px;
         }
 
         .feature-card p {
             color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 0.94rem;
         }
 
         .install-section {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 24px;
+            display: grid;
+            gap: 16px;
         }
 
         .install-option {
-            margin-bottom: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+            transition: border-color var(--transition);
         }
 
-        .install-option:last-child {
-            margin-bottom: 0;
+        .install-option:hover {
+            border-color: var(--border-strong);
         }
 
         .install-option h3 {
             font-size: 1rem;
             color: var(--accent);
-            margin-bottom: 12px;
+            margin-bottom: 14px;
+        }
+
+        .install-note {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .install-note code {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.85em;
         }
 
         .code-block {
-            background: var(--bg-primary);
+            background: #070b10;
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 16px;
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
             overflow-x: auto;
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
+            line-height: 1.7;
         }
 
         .code-block code {
-            color: var(--text-primary);
+            color: #a9c1e0;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .requirements-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 12px;
             list-style: none;
         }
 
         .requirements-list li {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 16px;
+            padding: 14px 16px;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            transition: border-color var(--transition);
+        }
+
+        .requirements-list li:hover {
+            border-color: var(--border-strong);
         }
 
         .privacy-notice {
-            background: var(--bg-secondary);
+            background: rgba(63, 185, 80, 0.06);
+            border: 1px solid rgba(63, 185, 80, 0.25);
             border-left: 4px solid var(--green);
-            padding: 16px 20px;
-            border-radius: 0 6px 6px 0;
+            padding: 18px 22px;
+            border-radius: var(--radius-sm);
         }
 
         .privacy-notice h3 {
-            display: flex;
-            align-items: center;
-            gap: 8px;
             margin-bottom: 8px;
             color: var(--green);
         }
@@ -239,44 +315,54 @@
         }
 
         footer {
-            padding: 32px 0;
+            padding: 40px 0 56px;
             border-top: 1px solid var(--border);
             text-align: center;
             color: var(--text-secondary);
+            font-size: 0.95rem;
         }
 
         footer a {
-            color: var(--accent);
+            color: var(--text-secondary);
             text-decoration: none;
+            transition: color var(--transition);
         }
 
         footer a:hover {
-            text-decoration: underline;
+            color: var(--accent);
         }
 
         .footer-links {
             display: flex;
             gap: 24px;
             justify-content: center;
-            margin-bottom: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
         }
 
         @media (max-width: 600px) {
-            h1 {
-                font-size: 1.75rem;
+            header {
+                padding: 48px 0 32px;
             }
 
-            .tagline {
-                font-size: 1rem;
+            main {
+                padding: 40px 0;
+            }
+
+            section {
+                margin-bottom: 40px;
             }
 
             .cta-buttons {
                 flex-direction: column;
                 align-items: stretch;
             }
+        }
 
-            .btn {
-                justify-content: center;
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
             }
         }
     </style>
@@ -285,7 +371,6 @@
 <body>
     <div class="container">
         <header>
-            <div class="logo">🎵</div>
             <h1>Virtual Mic Soundboard</h1>
             <p class="tagline">Play sounds through a virtual microphone on Linux with PipeWire</p>
 
@@ -293,24 +378,25 @@
                 <a href="https://github.com/antimassV" style="text-decoration: none;">
                     <span class="badge"
                         style="background: var(--bg-tertiary); border-color: var(--accent); color: var(--accent); font-size: 0.95rem; padding: 6px 16px;">
-                        👤 by antimassV
+                        by antimassV
                     </span>
                 </a>
             </div>
 
             <div class="badges">
-                <span class="badge green">✓ Open Source</span>
+                <span class="badge green">Open Source</span>
                 <span class="badge">Linux</span>
                 <span class="badge">PipeWire</span>
+                <span class="badge">Self-contained AppImage</span>
                 <span class="badge">MIT License</span>
             </div>
 
             <div class="cta-buttons">
                 <a href="https://github.com/antimassV/virtual-mic-soundboard/releases/latest" class="btn btn-primary">
-                    ⬇️ Download AppImage
+                    Download AppImage
                 </a>
                 <a href="https://github.com/antimassV/virtual-mic-soundboard" class="btn btn-secondary">
-                    📂 View on GitHub
+                    View on GitHub
                 </a>
             </div>
         </header>
@@ -320,29 +406,33 @@
                 <h2>Features</h2>
                 <div class="features-grid">
                     <div class="feature-card">
-                        <h3>🎤 Virtual Microphone</h3>
+                        <h3>Virtual Microphone</h3>
                         <p>Plays sounds through a virtual mic that works with Discord, OBS, games, and any app that uses
                             microphone input.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>⌨️ Global Hotkeys</h3>
+                        <h3>Global Hotkeys</h3>
                         <p>Trigger sounds with customizable keyboard shortcuts, even when the app is in the background
-                            or while gaming.</p>
+                            or while gaming. Requires an X11 (or XWayland) session.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🎚️ Volume Control</h3>
+                        <h3>Volume Control</h3>
                         <p>Individual volume sliders for each sound plus a master volume. Supports up to 200% boost.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>⏯️ Pause & Resume</h3>
+                        <h3>Pause &amp; Resume</h3>
                         <p>Pause sounds mid-playback and resume exactly where you left off.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🔄 Audio Overlap</h3>
+                        <h3>Audio Overlap</h3>
                         <p>Choose whether sounds play simultaneously or interrupt each other.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🔌 Easy Routing</h3>
+                        <h3>Wide Format Support</h3>
+                        <p>Play MP3, WAV, FLAC, OGG, and OPUS files. Boost any track up to 200% without clipping.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Easy Routing</h3>
                         <p>Built-in routing tab to wire applications directly to the virtual microphone.</p>
                     </div>
                 </div>
@@ -356,6 +446,8 @@
                         <div class="code-block">
                             <code>curl -fsSL https://raw.githubusercontent.com/antimassV/virtual-mic-soundboard/main/install.sh | bash</code>
                         </div>
+                        <p class="install-note">Installs to <code>~/.local/share</code> and creates a menu entry.
+                            Requires Python 3.8+ and PipeWire.</p>
                     </div>
 
                     <div class="install-option">
@@ -363,6 +455,8 @@
                         <div class="code-block">
                             <code>curl -L -o VirtualMicSoundboard.AppImage https://github.com/antimassV/virtual-mic-soundboard/releases/latest/download/VirtualMicSoundboard-x86_64.AppImage<br>chmod +x VirtualMicSoundboard.AppImage<br>./VirtualMicSoundboard.AppImage</code>
                         </div>
+                        <p class="install-note">Bundles its own Python runtime and dependencies — no Python install
+                            required. On first launch it integrates itself into your application menu.</p>
                     </div>
 
                     <div class="install-option">
@@ -370,6 +464,7 @@
                         <div class="code-block">
                             <code>git clone https://github.com/antimassV/virtual-mic-soundboard.git<br>cd virtual-mic-soundboard<br>./install.sh</code>
                         </div>
+                        <p class="install-note">Build and run directly from the repository. Python 3.8+ required.</p>
                     </div>
                 </div>
             </section>
@@ -377,17 +472,17 @@
             <section>
                 <h2>System Requirements</h2>
                 <ul class="requirements-list">
-                    <li>🐧 Linux (Ubuntu 20.04+, Fedora 34+, Arch)</li>
-                    <li>🔊 PipeWire with PulseAudio compat</li>
-                    <li>🐍 Python 3.8+</li>
-                    <li>🖥️ X11 or Wayland</li>
+                    <li>Linux (Ubuntu 20.04+, Fedora 34+, Arch)</li>
+                    <li>PipeWire with PulseAudio compatibility (pipewire-pulse)</li>
+                    <li>Python 3.8+ for source installs — not needed for the AppImage</li>
+                    <li>X11 or XWayland (global hotkeys), Wayland otherwise</li>
                 </ul>
             </section>
 
             <section>
                 <h2>Privacy</h2>
                 <div class="privacy-notice">
-                    <h3>🔒 Your keystrokes are private</h3>
+                    <h3>Your keystrokes are private</h3>
                     <p>This app uses <code>pynput</code> for global hotkey detection. <strong>Keystrokes are NOT
                             recorded or sent anywhere.</strong> They are only used locally on your machine to trigger
                         sound playback when you press your configured hotkey combinations.</p>
@@ -406,7 +501,6 @@
                 Created by <a href="https://github.com/antimassV"
                     style="font-weight: 600; color: var(--accent);">antimassV</a>
             </p>
-            <p style="font-size: 0.9rem;">Made with ❤️ for the Linux community</p>
         </footer>
     </div>
 </body>

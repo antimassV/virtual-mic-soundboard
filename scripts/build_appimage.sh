@@ -1,22 +1,37 @@
 #!/bin/bash
-# AppImage builder for Virtual Mic Soundboard
-# This script packages the soundboard as a portable AppImage
-# Updated to bundle libportaudio and libsndfile
+# AppImage builder for Virtual Mic Soundboard.
+#
+# Hardened packaging: a self-contained CPython (python-build-standalone) is
+# bundled into the AppImage, so the result does not depend on the target
+# machine having a compatible system Python. The previous approach installed
+# wheels for the build machine's Python into a shared directory but still ran
+# the host's `python3`, which broke whenever the host minor version differed.
 
 set -e
 
 APP_NAME="VirtualMicSoundboard"
-VERSION="1.0.2"
 ARCH="x86_64"
+
+# Pinned standalone CPython (relocatable, no system Python required).
+PYTHON_VERSION="3.11.16"
+PBS_TAG="20260901"
+PBS_URL="https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_TAG}/cpython-${PYTHON_VERSION}+${PBS_TAG}-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz"
+
+APPIMAGETOOL_URL="https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
 
 # Get the project root directory (one level up from this script)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT_DIR"
 
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/virtual-mic-soundboard"
+mkdir -p "$CACHE_DIR"
+
+# Single source of truth for the app version (embedded in the desktop entry).
+VERSION="$(grep -m1 '^VERSION = ' src/settings.py | cut -d '"' -f 2)"
+
 echo "Building AppImage for $APP_NAME v$VERSION..."
 
-# Create AppDir structure
 APPDIR="$ROOT_DIR/$APP_NAME.AppDir"
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr/bin"
@@ -24,90 +39,101 @@ mkdir -p "$APPDIR/usr/lib"
 mkdir -p "$APPDIR/usr/share/applications"
 mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 
-# Copy application files
+# -------------------------------------------------------------------------
+# 1. Application files
+# -------------------------------------------------------------------------
 echo "Copying application files..."
 cp src/soundboard.py "$APPDIR/usr/bin/"
 cp src/settings.py "$APPDIR/usr/bin/"
 cp requirements.txt "$APPDIR/usr/bin/"
+# settings.py/main() resolve the icon relative to the scripts (../assets).
+mkdir -p "$APPDIR/usr/assets"
+cp assets/icon.png "$APPDIR/usr/assets/icon.png"
 cp assets/icon.png "$APPDIR/usr/bin/icon.png"
-cp -r assets "$APPDIR/usr/"
 
-# Icon for system integration
-mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
+# Icon for desktop integration.
 cp assets/icon.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/soundboard.png"
 
-# Root icons for AppImage (must match Icon= name in desktop file)
+# Root icons for AppImage (must match Icon= name in the desktop file).
 cp assets/icon.png "$APPDIR/icon.png"
 cp assets/icon.png "$APPDIR/.DirIcon"
 
-# Determine python version
-PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-SITE_PACKAGES="$APPDIR/usr/lib/python$PY_VER/site-packages"
-mkdir -p "$SITE_PACKAGES"
+# -------------------------------------------------------------------------
+# 2. Bundle a self-contained Python interpreter
+# -------------------------------------------------------------------------
+PYTHON_TARBALL="$CACHE_DIR/cpython-${PYTHON_VERSION}+${PBS_TAG}-install_only_stripped.tar.gz"
+if [ ! -f "$PYTHON_TARBALL" ]; then
+    echo "Downloading standalone CPython $PYTHON_VERSION..."
+    curl -fSL -o "$PYTHON_TARBALL" "$PBS_URL"
+fi
+
+echo "Extracting CPython into AppDir..."
+mkdir -p "$APPDIR/usr"
+tar -xzf "$PYTHON_TARBALL" -C "$APPDIR/usr"
+
+BUNDLED_PY="$APPDIR/usr/python/bin/python3"
+if [ ! -x "$BUNDLED_PY" ]; then
+    echo "ERROR: bundled interpreter not found at $BUNDLED_PY"
+    exit 1
+fi
+
+echo "Installing Python dependencies into bundled interpreter..."
+"$BUNDLED_PY" -m pip install --no-warn-script-location --upgrade pip
+"$BUNDLED_PY" -m pip install --no-warn-script-location --upgrade -r requirements.txt
+
+# Drop pip's cache/wheels to keep the AppImage small.
+rm -rf "$APPDIR/usr/python/lib/python"*/site-packages/pip \
+       "$APPDIR/usr/python/lib/python"*/site-packages/setuptools \
+       "$APPDIR/usr/python/lib/python"*/site-packages/wheel* 2>/dev/null || true
 
 # -------------------------------------------------------------------------
-# BUNDLE SYSTEM LIBRARIES (Fix for missing .so files)
+# 3. Bundle native libraries loaded at runtime via dlopen/ctypes
 # -------------------------------------------------------------------------
 echo "Bundling system shared libraries..."
 
-# Helper function to find and copy a library by name
-# Uses 'ldconfig' to find the path, 'cp -L' to dereference symlinks (copy the actual file)
 copy_lib() {
-    local lib_name_pattern=$1
-    # Find the library path. Grep filters, head takes the first match, cut extracts path.
-    local lib_path=$(ldconfig -p | grep "$lib_name_pattern" | head -n 1 | cut -d ">" -f 2 | xargs)
-    
-    if [ -n "$lib_path" ] && [ -f "$lib_path" ]; then
-        echo "  -> Bundling $lib_name_pattern from $lib_path"
-        cp -L "$lib_path" "$APPDIR/usr/lib/"
+    local pattern=$1
+    local path
+    path="$(ldconfig -p | grep "$pattern" | head -n 1 | cut -d '>' -f 2 | xargs)"
+    if [ -n "$path" ] && [ -f "$path" ]; then
+        echo "  -> $pattern from $path"
+        cp -L "$path" "$APPDIR/usr/lib/"
     else
-        echo "  !! WARNING: Could not find system library matching: $lib_name_pattern"
-        echo "     (The AppImage might fail to run on systems without this library)"
+        echo "  !! WARNING: no system library matching $pattern (target systems must provide it)"
     fi
 }
 
-# 1. Core Audio Libraries
+# sounddevice dlopens libportaudio via ctypes, so it must be present.
+# Nothing else needs bundling: the soundfile wheel statically links all of its
+# audio codecs, and Python's cffi/libffi is self-contained. Bundling only this
+# one library also means LD_LIBRARY_PATH cannot shadow the libraries used by
+# helper processes such as pactl.
 copy_lib "libportaudio.so.2"
-copy_lib "libsndfile.so.1"
-
-# 2. Dependencies for libsndfile (Vorbis, OGG, FLAC support)
-copy_lib "libvorbis.so"
-copy_lib "libvorbisenc.so"
-copy_lib "libogg.so"
-copy_lib "libflac.so"
-copy_lib "libopus.so"
-copy_lib "libmpg123.so"  # For MP3 support if available
-
-# 3. System helpers often needed by Python CFFI (used by soundfile/pynput)
-copy_lib "libffi.so"
 
 # -------------------------------------------------------------------------
-
-# Install Python dependencies into AppDir at BUILD TIME
-echo "Bundling Python dependencies for Python $PY_VER..."
-# We use --upgrade to ensure we get fresh wheels (which often contain their own binary libs)
-pip3 install -r requirements.txt --target "$SITE_PACKAGES" --upgrade
-
-# Create AppRun script
-# Note: LD_LIBRARY_PATH ensures our bundled libs in usr/lib are found first
-cat > "$APPDIR/AppRun" << EOF
+# 4. AppRun launcher
+# -------------------------------------------------------------------------
+cat > "$APPDIR/AppRun" << 'EOF'
 #!/bin/bash
-APPDIR="\$(dirname "\$(readlink -f "\$0")")"
-export PATH="\$APPDIR/usr/bin:\$PATH"
-export LD_LIBRARY_PATH="\$APPDIR/usr/lib:\$LD_LIBRARY_PATH"
+HERE="$(dirname "$(readlink -f "$0")")"
 
-# Dynamic PYTHONPATH based on bundled version
-export PYTHONPATH="\$APPDIR/usr/lib/python$PY_VER/site-packages:\$PYTHONPATH"
+# Do not let the host's Python configuration leak into the bundled runtime.
+unset PYTHONHOME PYTHONPATH
 
-# Use system Python with bundled packages
-cd "\$APPDIR/usr/bin"
-exec python3 soundboard.py "\$@"
+export PATH="$HERE/usr/bin:$HERE/usr/python/bin:$PATH"
+export LD_LIBRARY_PATH="$HERE/usr/lib:${LD_LIBRARY_PATH:-}"
+
+# Bundled interpreter: no dependency on the host's Python.
+cd "$HERE/usr/bin"
+exec "$HERE/usr/python/bin/python3" soundboard.py "$@"
 EOF
 
 chmod +x "$APPDIR/AppRun"
 
-# Create desktop file
-cat > "$APPDIR/soundboard.desktop" << EOF
+# -------------------------------------------------------------------------
+# 5. Desktop file
+# -------------------------------------------------------------------------
+cat > "$APPDIR/soundboard.desktop" << 'EOF'
 [Desktop Entry]
 Type=Application
 Name=Virtual Mic Soundboard
@@ -116,21 +142,26 @@ Exec=soundboard
 Icon=icon
 Categories=Audio;AudioVideo;
 Terminal=false
+StartupWMClass=soundboard
 EOF
 
 cp "$APPDIR/soundboard.desktop" "$APPDIR/usr/share/applications/"
 
-# Download appimagetool if not present
-if [ ! -f "appimagetool-x86_64.AppImage" ]; then
+# -------------------------------------------------------------------------
+# 6. Build the AppImage
+# -------------------------------------------------------------------------
+APPIMAGETOOL="$CACHE_DIR/appimagetool-$ARCH.AppImage"
+if [ ! -f "$APPIMAGETOOL" ]; then
     echo "Downloading appimagetool..."
-    wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
-    chmod +x appimagetool-x86_64.AppImage
+    curl -fSL -o "$APPIMAGETOOL" "$APPIMAGETOOL_URL"
+    chmod +x "$APPIMAGETOOL"
 fi
 
-# Build AppImage
 echo "Building AppImage..."
-# ARCH=x86_64 explicitly set to avoid errors on some systems
-ARCH=$ARCH ./appimagetool-x86_64.AppImage "$APPDIR" "$APP_NAME-$VERSION-$ARCH.AppImage"
+# APPIMAGE_EXTRACT_AND_RUN lets appimagetool work without FUSE.
+# --no-appstream skips AppStream metadata validation (not needed here).
+APPIMAGE_EXTRACT_AND_RUN=1 ARCH="$ARCH" "$APPIMAGETOOL" --no-appstream \
+    "$APPDIR" "$ROOT_DIR/$APP_NAME-$ARCH.AppImage"
 
-echo "AppImage created: $APP_NAME-$VERSION-$ARCH.AppImage"
+echo "AppImage created: $APP_NAME-$ARCH.AppImage"
 echo "You can now distribute this file!"

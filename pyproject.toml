@@ -1,0 +1,16 @@
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+extend-exclude = [".venv*", "venv", "build", "dist", "*.AppDir", "squashfs-root"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+# E402: imports intentionally follow the dependency bootstrap in soundboard.py.
+# E501: long lines are tolerated (UI strings / stylesheets).
+# E701: single-line guards (e.g. ``if x: continue``) are used deliberately.
+# E722: bare excepts are used deliberately around optional system calls.
+# W293: intentional alignment whitespace inside help text blocks.
+ignore = ["E402", "E501", "E701", "E722", "W293"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
